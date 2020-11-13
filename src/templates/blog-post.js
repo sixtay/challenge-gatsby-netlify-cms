@@ -16,6 +16,7 @@ export const BlogPostTemplate = ({
 }) => {
   const PostContent = contentComponent || Content
 
+
   return (
     <section className="section">
       {helmet || ''}
@@ -51,11 +52,24 @@ BlogPostTemplate.propTypes = {
   contentComponent: PropTypes.func,
   description: PropTypes.string,
   title: PropTypes.string,
+  scripts: PropTypes.string,
   helmet: PropTypes.object,
 }
 
 const BlogPost = ({ data }) => {
   const { markdownRemark: post } = data
+  const scriptFieldToHelmet = (scriptsField) => {
+    const scriptTagRegex = {
+      full: /^<script\s?(\w*="text\/javascript")?>/m,
+      typeDef: /^type.*text\/javascript.*/g
+    };
+    const scripts = scriptsField.trim()
+      .split(scriptTagRegex.full)
+      .filter((s) => (typeof s !== 'undefined') && s.length && !s.match(scriptTagRegex.typeDef))
+      .map(s => s.split('</script>')[0]);
+
+    return scripts.map(script => <script>{script}</script>);
+  }
 
   return (
     <Layout>
@@ -70,6 +84,7 @@ const BlogPost = ({ data }) => {
               name="description"
               content={`${post.frontmatter.description}`}
             />
+            {scriptFieldToHelmet(post.frontmatter.scripts)}
           </Helmet>
         }
         tags={post.frontmatter.tags}
@@ -97,6 +112,7 @@ export const pageQuery = graphql`
         title
         description
         tags
+        scripts
       }
     }
   }
